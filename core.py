@@ -648,7 +648,7 @@ class Cache:
         return self._con.execute
     
     @property
-    def _sql_many(self): #add zhoufang 20230210
+    def _sql_batch(self): #Bulk insert into database, add new func by zhoufang 20230210
         return self._con.executemany
 
     @property
@@ -750,7 +750,7 @@ class Cache:
                 if name is not None:
                     _disk_remove(name)
 
-    def set_batch(self, key, value, expire=None, read=False, tag=None, retry=True): # add new func by zhoufang 20230210
+    def set_batch(self, key, value, expire=None, read=False, tag=None, retry=True): #Bulk insert into database, add new func by zhoufang 20230210
         """ Batch Set `key` and `value` item in cache.
 
         When `read` is `True`, `value` should be a file-like object opened
@@ -909,8 +909,8 @@ class Cache:
             ),
         )
 
-    def _batch_row_insert(self, key, raw, now, columns): # add new func by zhoufang 20230210
-        sql = self._sql_many
+    def _batch_row_insert(self, key, raw, now, columns): #Bulk insert into database, add new func by zhoufang 20230210
+        sql = self._sql_batch
         expire_time, tag, size, mode, filename, value = columns
         sql(
             "INSERT INTO Cache (key, raw, store_time, expire_time, access_time,access_count, tag, size, mode, filename, value) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
