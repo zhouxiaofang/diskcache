@@ -797,7 +797,21 @@ class Cache:
         # INSERT OR REPLACE aka UPSERT is not used because the old filename may
         # need cleanup.
 
-        self._batch_row_insert(db_key, raw, now, columns)
+        with self._transact(retry, filename) as (sql, cleanup):
+            rows = sql(
+                'SELECT rowid, filename FROM Cache'
+                ' WHERE key = ? AND raw = ?',
+                (db_key, raw),
+            ).fetchall()
+
+            if rows:
+                ((rowid, old_filename),) = rows
+                cleanup(old_filename)
+                self._row_update(rowid, now, columns)
+            else:
+                self._batch_row_insert(db_key, raw, now, columns)
+
+            self._cull(now, sql, cleanup)
         return True
 
     def set(self, key, value, expire=None, read=False, tag=None, retry=False):
